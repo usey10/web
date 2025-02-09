@@ -23,7 +23,8 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <h1 className={styles.headerTitle}>CARAGSER</h1>
+      <img src='/images/logo_blue.png' alt="Logo" className={styles.logo} />
+      {/* <h1 className={styles.headerTitle}>CARAGSER</h1> */}
       {accessToken ? (
         <button className={styles.logoutButton} onClick={handleLogout}>Logout</button>
       ) : (

@@ -259,7 +259,7 @@
 
 .keywordTag:hover {
   background-color: var(--color-cobblestone);
-  color: var(--color-text-dark);
+  color: var(--color-text-light);
 }
 
 .suggestedQuestionsContainer {

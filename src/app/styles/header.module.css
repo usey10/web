@@ -2,9 +2,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.5rem;
   background-color: var(--color-cobblestone);
   color: white;
+}
+
+.leftSection {
+  display: flex; /* 왼쪽 섹션을 flexbox로 설정 */
+  align-items: center; /* 수직 정렬 */
+}
+
+.logo {
+  width: auto; /* 원하는 너비로 조정 */
+  height: 3rem; /* 비율 유지 */
+  margin-right: 0; /* 제목과의 간격 */
+  margin-left: 1rem;
 }
 
 .headerTitle {
@@ -19,6 +31,8 @@
   color: white;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+  margin-right: 1rem;
 }
 
 .logoutButton:hover {
