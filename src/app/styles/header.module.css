@@ -19,6 +19,13 @@
   margin-left: 1rem;
 }
 
+.name {
+  width: auto; /* 원하는 너비로 조정 */
+  height: 2.25rem; /* 비율 유지 */
+  margin-right: 0; /* 제목과의 간격 */
+  margin-left: 0.5rem;
+}
+
 .headerTitle {
   font-size: 1.75rem;
 }

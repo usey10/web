@@ -1,5 +1,5 @@
 
-/* 기존 색상 */
+
 /* :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,44 +12,18 @@
   --color-text-light: #F1F0EB;
 } */
 
-/* 파란색 */
+/* 파란색 계열로 색상 변경 */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --color-cobblestone: #24344c;
+  --color-cobblestone: #23344c;
   --color-gardenia: #dfedfb;
   --color-tendril: #5d728a;
-  --color-tendril-hover: #5c80a8;
-  --color-text-dark: #041424;
-  --color-text-secondary: #445E7C;
-  --color-text-light: #dfedfb;  
+  --color-tendril-hover: #737C66;
+  --color-text-dark: #23344c;
+  --color-text-secondary: #58718b;
+  --color-text-light: #d1deeb;
 }
-
-/* 주황색 */
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --color-cobblestone: #241404;
-  --color-gardenia: #efdcc6;
-  --color-tendril: #593c29;
-  --color-tendril-hover: #be8259;
-  --color-text-dark: #241404;
-  --color-text-secondary: #422c15;
-  --color-text-light: #efdcc6;
-} */
-
-/* 보라색 */
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --color-cobblestone: #140424;
-  --color-gardenia: #e8deef;
-  --color-tendril: #442654;
-  --color-tendril-hover: #6a3b83;
-  --color-text-dark: #140424;
-  --color-text-secondary: #3d1d5d;
-  --color-text-light: #e8deef;
-} */
 
 /* @media (prefers-color-scheme: dark) {
   :root {
