@@ -175,6 +175,9 @@ export function ChatContainer() {
           },
           body: JSON.stringify(cleanRequestData),
         });
+        setIsReverseQ(false)
+        keywordsRef.current = [];
+        suggestQuestionsRef.current = [];
       }
 
         if (!response.ok) {
@@ -195,8 +198,6 @@ export function ChatContainer() {
         currentNodes: []
       }
       let buffer = ""; // 불완전한 청크를 저장하기 위한 버퍼
-      let accumulatedQAnswer = {}
-      let updated = false;
       
       while (true) {
         const { value, done } = await reader.read();
@@ -215,32 +216,27 @@ export function ChatContainer() {
           try {
             const data = JSON.parse(line);
 
-            if (data.currentNode === "delay_node") {
-                setCurrentAnswer("답변을 생성하는 중...");
-            } 
-            else if (data.currentNode === "refine_question") {
+            if (!currentSessionId && data.sessionId) {
+              setCurrentSessionId(data.sessionId);
+              console.log('Creating new session with ID:', data.sessionId);
+              const event = new CustomEvent('sessionCreated', {
+                detail: { sessionId: data.sessionId }
+              });
+              window.dispatchEvent(event);
+            }
+
+            if (data.currentNode === "refine_question") {
               setIsReverseQ(true)
 
               accumulatedAnswer += data.answer;
               setCurrentAnswer(accumulatedAnswer);
 
-              accumulatedNode.currentNodes.push(data.currentNode)
+              accumulatedNode.currentNodes.push("END")
               setCurrentNodes({
-                ...accumulatedNode, // ✅ 기존 객체 복사 → 새로운 객체 생성
-                message_id: userMessageId, // ✅ 새로운 message_id 값 할당
-                currentNodes: [...accumulatedNode.currentNodes], // ✅ 기존 배열을 복사하고 새로운 값 추가
+                ...accumulatedNode, // 기존 객체 복사 → 새로운 객체 생성
+                message_id: userMessageId, // 새로운 message_id 값 할당
+                currentNodes: [...accumulatedNode.currentNodes], // 기존 배열을 복사하고 새로운 값 추가
               });
-
-              // keywords와 suggestQuestions가 모두 채워졌는지 확인
-                // 새 세션이 생성된 경우
-              if (!currentSessionId && data.sessionId) {
-                setCurrentSessionId(data.sessionId);
-                console.log('Creating new session with ID:', data.sessionId);
-                const event = new CustomEvent('sessionCreated', {
-                  detail: { sessionId: data.sessionId }
-                });
-                window.dispatchEvent(event);
-              }
 
               // 기존 메시지 배열에서 사용자 메시지는 유지하고 AI 답변만 업데이트
               setMessages(prev => prev.map(msg => 
@@ -255,101 +251,76 @@ export function ChatContainer() {
               ));
               setCurrentAnswer("");
               setIsGenerating(false);
-              
+            }
+
+            else if (data.currentNode === "not_for_camera") {
+              accumulatedAnswer += data.answer;
+              setCurrentAnswer(accumulatedAnswer);
+
+              accumulatedNode.currentNodes.push("END")
+              setCurrentNodes({
+                ...accumulatedNode, // ✅ 기존 객체 복사 → 새로운 객체 생성
+                message_id: userMessageId, // ✅ 새로운 message_id 값 할당
+                currentNodes: [...accumulatedNode.currentNodes], // ✅ 기존 배열을 복사하고 새로운 값 추가
+              });
+
+              // 기존 메시지 배열에서 사용자 메시지는 유지하고 AI 답변만 업데이트
+              setMessages(prev => prev.map(msg => 
+                msg.message_id === userMessageId
+                  ? {
+                      ...msg,
+                      aiMessage: accumulatedAnswer,
+                      keywords: data.keywords,
+                      suggestQuestions: data.suggestQuestions
+                    }
+                  : msg
+              ));
+              setCurrentAnswer("");
+              setIsReverseQ(false)
+              setIsGenerating(false);              
             } 
 
             else if (data.currentNode === "답변 생성 중") {
-
-              setIsReverseQ(false)
               accumulatedAnswer += data.answer;
               setCurrentAnswer(accumulatedAnswer);
               
-              accumulatedNode.message_id = userMessageId
+              // 현재 노드가 이전 노드와 같지 않다면 진행중인 노드 배열에 추가
               if (accumulatedNode.currentNodes.at(-1) !== data.currentNode) {
                 accumulatedNode.currentNodes.push(data.currentNode);
                 setCurrentNodes({
-                  ...accumulatedNode, // ✅ 기존 객체 복사 → 새로운 객체 생성
-                  message_id: userMessageId, // ✅ 새로운 message_id 값 할당
-                  currentNodes: [...accumulatedNode.currentNodes] // ✅ 기존 배열을 복사하고 새로운 값 추가
+                  ...accumulatedNode, // 기존 객체 복사 → 새로운 객체 생성
+                  message_id: userMessageId, // 새로운 message_id 값 할당
+                  currentNodes: [...accumulatedNode.currentNodes] // 기존 배열을 복사하고 새로운 값 추가
                 });
-              }
-
-
-              // keywords와 suggestQuestions가 모두 채워졌는지 확인
-              if (data.keywords?.length > 0 && data.suggestQuestions?.length > 0) {
-                // 새 세션이 생성된 경우
-                if (!currentSessionId && data.sessionId) {
-                  setCurrentSessionId(data.sessionId);
-                  console.log('Creating new session with ID:', data.sessionId);
-                  const event = new CustomEvent('sessionCreated', {
-                    detail: { sessionId: data.sessionId }
-                  });
-                  window.dispatchEvent(event);
-                }
-
-                // 기존 메시지 배열에서 사용자 메시지는 유지하고 AI 답변만 업데이트
-                setMessages(prev => prev.map(msg => 
-                  msg.message_id === userMessageId
-                    ? {
-                        ...msg,
-                        aiMessage: accumulatedAnswer,
-                        keywords: data.keywords,
-                        suggestQuestions: data.suggestQuestions
-                      }
-                    : msg
-                ));
-                setCurrentAnswer("");
-                setIsGenerating(false);
               }
             }
 
-
-
-        
-
-
-
-
-
-
             else {
-              accumulatedNode.message_id = userMessageId
               if (accumulatedNode.currentNodes.at(-1) !== data.currentNode) {
                 accumulatedNode.currentNodes.push(data.currentNode);
                 setCurrentNodes({
-                  ...accumulatedNode, // ✅ 기존 객체 복사 → 새로운 객체 생성
-                  message_id: userMessageId, // ✅ 새로운 message_id 값 할당
-                  currentNodes: [...accumulatedNode.currentNodes] // ✅ 기존 배열을 복사하고 새로운 값 추가
+                  ...accumulatedNode, // 기존 객체 복사 → 새로운 객체 생성
+                  message_id: userMessageId, // 새로운 message_id 값 할당
+                  currentNodes: [...accumulatedNode.currentNodes] // 기존 배열을 복사하고 새로운 값 추가
                 });
               }
-              const lastTwoNodes = accumulatedNode.currentNodes.slice(-2); // 마지막 2개 가져오기
 
-              // 조건 확인 (순서 상관없이 체크)
+              if (Array.isArray(data.keywords) && data.keywords.length > 0) {
+                keywordsRef.current = data.keywords;
+              }
+              if (Array.isArray(data.suggestQuestions) && data.suggestQuestions.length > 0) {
+                suggestQuestionsRef.current = data.suggestQuestions;
+              }
+
               if (
-                lastTwoNodes.includes("키워드 추출 END") &&
-                lastTwoNodes.includes("추천 질문 END")
+                keywordsRef.current.length > 0 &&
+                suggestQuestionsRef.current.length > 0
               ) {
                 setCurrentNodes({
                   message_id: userMessageId,
                   currentNodes: ["END"]
                 })
-              }
 
-              if (Array.isArray(data.keywords) && data.keywords.length > 0) {
-                keywordsRef.current = data.keywords;
-                updated = true;
-              }
-              if (Array.isArray(data.suggestQuestions) && data.suggestQuestions.length > 0) {
-                suggestQuestionsRef.current = data.suggestQuestions;
-                updated = true;
-              }
-
-
-              if (
-                keywordsRef.current.length > 0 &&
-                suggestQuestionsRef.current.length > 0 &&
-                updated
-              ) {
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.message_id === userMessageId
@@ -362,11 +333,10 @@ export function ChatContainer() {
                       : msg
                   )
                 );
+                setCurrentAnswer("");
+                setIsGenerating(false);
               }
             }
-
-
-
           } catch (error) {
             console.error('Error parsing line:', line, error);
           }
